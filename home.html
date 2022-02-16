@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script>
+        window.addEventListener("load", function(evt) {
+
+            var output = document.getElementById("output");
+            var input = document.getElementById("input");
+            var ws;
+
+            var print = function(message) {
+                var d = document.createElement("div");
+                d.textContent = message;
+                output.innerHTML = message;
+                output.scroll(0, output.scrollHeight);
+            };
+
+            document.getElementById("open").onclick = function(evt) {
+                if (ws) {
+                    return false;
+                }
+                ws = new WebSocket("{{.}}");
+                ws.onopen = function(evt) {
+                    print("OPEN");
+                }
+                ws.onclose = function(evt) {
+                    print("CLOSE");
+                    ws = null;
+                }
+                ws.onmessage = function(evt) {
+                    print("T: " + evt.data);
+                }
+                ws.onerror = function(evt) {
+                    print("ERROR: " + evt.data);
+                }
+                return false;
+            };
+
+            document.getElementById("send").onclick = function(evt) {
+                if (!ws) {
+                    return false;
+                }
+                print("SEND: " + input.value);
+                ws.send(input.value);
+                return false;
+            };
+
+            document.getElementById("close").onclick = function(evt) {
+                if (!ws) {
+                    return false;
+                }
+                ws.close();
+                return false;
+            };
+
+        });
+    </script>
+    <script src="resources/p5.js"></script>
+    <script src="src/main.js"></script>
+</head>
+<body>
+<table>
+    <tr>
+        <td width="20%">
+            <form>
+                <button id="open">Open</button>
+                <button id="close">Close</button>
+            </form>
+        </td>
+        <td valign="top" width="80%">
+            <p>Click "Open" to create a connection to the server,
+                "Send" to send a message to the server and "Close" to close the connection.
+                You can change the message and send multiple times.
+            <p>
+        </td>
+    </tr>
+    <tr>
+        <td width="20%">
+            <div id="output" style="max-height: 70vh;overflow-y: scroll; font-family: 'Courier New', monospace; font-size: 10pt"></div>
+        </td>
+        <td width="80%">
+            <main></main>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
