@@ -26,10 +26,6 @@ const setup = (s) => () => {
     alignSlider = s.createSlider(0, 5, 0, 0.1);
     alignSlider.position(slider_cursor.x, slider_cursor.y);
     slider_cursor.x += separationSlider.width + SLIDER_SEP;
-
-    for (let i = 0; i < 30; i++) {
-        flock.push(new Boid(s));
-    }
 };
 
 let i = 0;

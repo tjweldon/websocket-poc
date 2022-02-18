@@ -5,9 +5,12 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -41,6 +44,21 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type LPFloat struct {
+	Value  float64 // the actual value
+	Digits int     // the number of digits used in json
+}
+
+func (l LPFloat) MarshalJSON() ([]byte, error) {
+	s := fmt.Sprintf("%.*f", l.Digits, l.Value)
+	return []byte(s), nil
+}
+
+type Coords struct {
+	X LPFloat `json:"x"`
+	Y LPFloat `json:"y"`
+}
+
 func tick(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -61,8 +79,16 @@ func tick(w http.ResponseWriter, r *http.Request) {
 			err = c.WriteMessage(websocket.TextMessage, []byte("Done!"))
 			return
 		case t := <-ticker.C:
-			err = c.WriteMessage(websocket.TextMessage, []byte(t.Format("15:04:05.999999999")))
-
+			timeFloat := float64(t.UnixMilli()%1000) / 1e3
+			coords := Coords{
+				X: LPFloat{Value: 10 * math.Cos(2*math.Pi*timeFloat), Digits: 2},
+				Y: LPFloat{Value: 10 * math.Sin(2*math.Pi*timeFloat), Digits: 2},
+			}
+			rawJson, err := json.Marshal(coords)
+			if err != nil {
+				panic(err)
+			}
+			err = c.WriteMessage(websocket.TextMessage, rawJson)
 		}
 	}
 }
@@ -79,17 +105,17 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	// Static assets (doesn't seem to be necessary)
-	//http.Handle("/assets/", http.FileServer(http.Dir("./assets")))
-	//http.Handle("/resources/", http.FileServer(http.Dir("./resources")))
+	//// Static assets (doesn't seem to be necessary)
+	http.Handle("/src/", http.FileServer(http.Dir(".")))
+	http.Handle("/resources/", http.FileServer(http.Dir(".")))
 
 	// Sockets
-	http.HandleFunc("/echo", echo)
+	//http.HandleFunc("/echo", echo)
 	http.HandleFunc("/tick", tick)
 
 	// Pages
-	http.HandleFunc("/other", other)
-	http.HandleFunc("/", home)
+	//http.HandleFunc("/other", home)
+	http.HandleFunc("/", other)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
@@ -102,7 +128,7 @@ func getFileText(path string) string {
 }
 
 var otherTemplate = template.Must(
-	template.New("").Parse(getFileText("./home.html")),
+	template.New("index").Parse(getFileText("./home.html")),
 )
 
 var homeTemplate = template.Must(template.New("").Parse(`

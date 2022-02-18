@@ -29,20 +29,12 @@
                     ws = null;
                 }
                 ws.onmessage = function(evt) {
+                    console.log(evt)
                     print("T: " + evt.data);
                 }
                 ws.onerror = function(evt) {
                     print("ERROR: " + evt.data);
                 }
-                return false;
-            };
-
-            document.getElementById("send").onclick = function(evt) {
-                if (!ws) {
-                    return false;
-                }
-                print("SEND: " + input.value);
-                ws.send(input.value);
                 return false;
             };
 
@@ -69,7 +61,7 @@
             </form>
         </td>
         <td valign="top" width="80%">
-            <p>Click "Open" to create a connection to the server,
+            <p>Click "Open" to create a connection to the server you lil guy,
                 "Send" to send a message to the server and "Close" to close the connection.
                 You can change the message and send multiple times.
             <p>
