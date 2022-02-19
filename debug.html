@@ -4,9 +4,10 @@
     <meta charset="utf-8">
     <script>
         let frameBuffer = [];
+        let ws;
         window.addEventListener("load", function(evt) {
             let output = document.getElementById("output");
-            let ws;
+
 
             const print = function(message) {
                 let d = document.createElement("div");
@@ -29,7 +30,8 @@
                 }
                 ws.onmessage = function(evt) {
                     print(evt.data);
-                    frameBuffer.push(evt.data)
+                    console.log(evt.data)
+                    frameBuffer.push(...JSON.parse(evt.data))
                 }
                 ws.onerror = function(evt) {
                     console.log("ERROR: " + evt.data);
@@ -55,21 +57,36 @@
         })
 
         let frame;
-        function setup() {}
+        function setup() {
+            createCanvas(800, 400)
+            background(0)
+        }
 
         function draw() {
             //called 60 times per second
-            if (frameBuffer.length < 1) {
-                return
+            let buffLen = frameBuffer.length;
+            if (buffLen < 1) {
+                return;
+            } else if (buffLen < 60) {
+                ws.send(60);
             }
+            background(0);
+
+            let colour = (Math.min(buffLen, 120)/120) * 255;
+
+            fill(255 - colour, colour, 0);
+            rect(5, 5, buffLen * 2, 10);
+
+            fill(255, 255, 255)
+            textSize(12);
+            text('buffer size: ' + buffLen.toString(), 10, 50);
+
 
             frame = frameBuffer.shift();
-            debug.innerHTML = "";
-            for (let frame of frameBuffer) {
-                let f = document.createElement("div")
-                f.textContent = frame;
-                debug.appendChild(f);
-            }
+            // debug.innerHTML = "";
+            // let f = document.createElement("div")
+            // f.textContent = buffLen.toString();
+            // debug.appendChild(f);
         }
     </script>
     <style>
@@ -102,7 +119,7 @@
             <div id="output" class="mono"></div>
         </td>
         <td width="80%">
-            <div id="debug" class="mono"></div>
+            <main></main>
         </td>
     </tr>
 </table>
