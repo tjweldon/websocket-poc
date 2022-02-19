@@ -8,7 +8,7 @@
         window.addEventListener("load", function(evt) {
             let output = document.getElementById("output");
 
-
+            // Debug output
             const print = function(message) {
                 let d = document.createElement("div");
                 d.textContent = message;
@@ -16,6 +16,8 @@
                 output.scroll(0, output.scrollHeight);
             };
 
+            // On clicking the 'Open' button:
+            // Assigns handlers to the webhook then opens the connection
             document.getElementById("open").onclick = function(evt) {
                 if (ws) {
                     return false;
@@ -39,6 +41,7 @@
                 return false;
             };
 
+            // On clicking close, closes the socket
             document.getElementById("close").onclick = function(evt) {
                 if (!ws) {
                     return false;
@@ -51,37 +54,48 @@
     </script>
     <script src="resources/p5.js"></script>
     <script>
-        let debug;
-        window.addEventListener("load", function (evt) {
-            debug = document.getElementById("debug");
-        })
+        // p5 library setup/draw implementations
 
         let frame;
+
+        // Setup the first frame of the canvas
+        // This is done once, before the animation begins
         function setup() {
             createCanvas(800, 400)
             background(0)
         }
 
+        // Called to render each frame, 60 times per second max
         function draw() {
-            //called 60 times per second
+            // buffLen is the number of buffered frames
+            // A frame is a list of objects, each representing
+            // an x, y coordinate pair e.g. {x: 150, y: 200}
             let buffLen = frameBuffer.length;
             if (buffLen < 1) {
+                // if it's 0 do nothing (freeze-frame)
                 return;
             } else if (buffLen < 60) {
+                // If there's less than 1 second of animation left,
+                // ask for another second (60 frames) from the server
                 ws.send(60);
             }
+
+            // blit the background so the previous frame is not visible
             background(0);
+
+            // Draw the buffer length bar
             strokeWeight(0);
-
             let colour = (Math.min(buffLen, 120)/120) * 255;
-
             fill(255 - colour, colour, 0);
             rect(5, 5, buffLen * 2, 20);
 
+            // Show the associated text
             fill(255, 255, 255)
             textSize(12);
             text('buffer size: ' + buffLen.toString(), 10, 50);
 
+            // Draw a white dot on the screen at each
+            // point in the list of points
             strokeWeight(8);
             stroke(255, 255, 255)
             frame = frameBuffer.shift();
@@ -89,11 +103,6 @@
                 console.log(coords)
                 point(coords.x, coords.y)
             }
-
-            // debug.innerHTML = "";
-            // let f = document.createElement("div")
-            // f.textContent = buffLen.toString();
-            // debug.appendChild(f);
         }
     </script>
     <style>

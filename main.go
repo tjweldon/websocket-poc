@@ -92,6 +92,11 @@ func tick(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// streamFrames handles the websocket that will stream the animation frames.
+// It sets up:
+//  - The listen goroutine to handle buffering requests from the socket client.
+//  - The frameGenerator goroutine to generate the requested number of frames.
+//  - A loop to serialise and return contiguous chunks of frame data to the client.
 func streamFrames(w http.ResponseWriter, r *http.Request) {
 	// Upgrade the web request to a socket
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -101,12 +106,24 @@ func streamFrames(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Socket close on function return
-	defer conn.Close()
+	defer func(conn *websocket.Conn) {
+		err := conn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(conn)
 
+	// Channel setup
 	frameStream := make(chan []Frame)
 	frameRequest := make(chan int)
+
+	// Frame data calculation goroutine
 	go frameGenerator(frameStream, frameRequest)
+
+	// Listens for buffering requests
 	go listen(conn, frameRequest)
+
+	// Instructs frameGenerator to begin with a request for 60 frames
 	frameRequest <- 60
 
 	for {
@@ -124,6 +141,11 @@ func streamFrames(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// frameGenerator is intended to be run asynchronously and will await a
+// message on the frameRequest channel in the form of an integer number
+// of frames. On receiving such a message it will calculate the next
+// sequence of frames until it has the number requested. They are then
+// sent into the frameStream channel.
 func frameGenerator(frameStream chan []Frame, frameRequest chan int) {
 	defer close(frameStream)
 	frameCount := 0
@@ -150,6 +172,9 @@ func frameGenerator(frameStream chan []Frame, frameRequest chan int) {
 	}
 }
 
+// listen is a thin adaptor layer goroutine that naively interprets
+// the utf8 text read from the socket as an int and then supplies
+// that value to the frameRequest Channel
 func listen(conn *websocket.Conn, frameRequest chan int) {
 	defer func() {
 		frameRequest <- -1
@@ -175,10 +200,12 @@ func listen(conn *websocket.Conn, frameRequest chan int) {
 	}
 }
 
+// index renders the root page to the response
 func index(w http.ResponseWriter, r *http.Request) {
 	otherTemplate.Execute(w, "ws://"+r.Host+"/tick")
 }
 
+// debug renders the root page with extra dev info
 func debug(w http.ResponseWriter, r *http.Request) {
 	debugTemplate.Execute(w, "ws://"+r.Host+"/tick")
 }
@@ -202,6 +229,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
+// A hack I'm using bc I couldn't get the template library to just read
+// directly from the files.
 func getFileText(path string) string {
 	content, err := os.ReadFile(path)
 	if err != nil {
