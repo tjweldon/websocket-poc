@@ -71,18 +71,25 @@
                 ws.send(60);
             }
             background(0);
+            strokeWeight(0);
 
             let colour = (Math.min(buffLen, 120)/120) * 255;
 
             fill(255 - colour, colour, 0);
-            rect(5, 5, buffLen * 2, 10);
+            rect(5, 5, buffLen * 2, 20);
 
             fill(255, 255, 255)
             textSize(12);
             text('buffer size: ' + buffLen.toString(), 10, 50);
 
-
+            strokeWeight(8);
+            stroke(255, 255, 255)
             frame = frameBuffer.shift();
+            for (let coords of frame) {
+                console.log(coords)
+                point(coords.x, coords.y)
+            }
+
             // debug.innerHTML = "";
             // let f = document.createElement("div")
             // f.textContent = buffLen.toString();
