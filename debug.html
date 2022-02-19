@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <script>
+        let frameBuffer = [];
         window.addEventListener("load", function(evt) {
-
             let output = document.getElementById("output");
             let ws;
 
@@ -48,7 +48,38 @@
         });
     </script>
     <script src="resources/p5.js"></script>
-    <script src="src/main.js"></script>
+    <script>
+        let debug;
+        window.addEventListener("load", function (evt) {
+            debug = document.getElementById("debug");
+        })
+
+        let frame;
+        function setup() {}
+
+        function draw() {
+            //called 60 times per second
+            if (frameBuffer.length < 1) {
+                return
+            }
+
+            frame = frameBuffer.shift();
+            debug.innerHTML = "";
+            for (let frame of frameBuffer) {
+                let f = document.createElement("div")
+                f.textContent = frame;
+                debug.appendChild(f);
+            }
+        }
+    </script>
+    <style>
+        .mono {
+            max-height: 70vh;
+            overflow-y: scroll;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+        }
+    </style>
 </head>
 <body>
 <table>
@@ -60,7 +91,7 @@
             </form>
         </td>
         <td valign="top" width="80%">
-            <p>Click "Open" to create a connection to the server you lil guy,
+            <p>Click "Open" to create a connection to the server,
                 "Send" to send a message to the server and "Close" to close the connection.
                 You can change the message and send multiple times.
             <p>
@@ -68,10 +99,10 @@
     </tr>
     <tr>
         <td width="20%">
-            <div id="output" style="max-height: 70vh;overflow-y: scroll; font-family: 'Courier New', monospace; font-size: 10pt"></div>
+            <div id="output" class="mono"></div>
         </td>
         <td width="80%">
-            <main></main>
+            <div id="debug" class="mono"></div>
         </td>
     </tr>
 </table>
