@@ -161,17 +161,17 @@ func listen(conn *websocket.Conn, frameRequest chan int) {
 			return
 		}
 
-		var framecount int
+		var frameCount int
 		if mt == websocket.TextMessage {
-			framecount, err = strconv.Atoi(string(msg))
+			frameCount, err = strconv.Atoi(string(msg))
 			if err != nil {
 				return
 			}
 		} else {
-			framecount = int(msg[0])
+			frameCount = int(msg[0])
 		}
 
-		frameRequest <- framecount
+		frameRequest <- frameCount
 	}
 }
 
